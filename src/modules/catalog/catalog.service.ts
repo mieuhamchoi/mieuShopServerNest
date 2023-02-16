@@ -13,4 +13,32 @@ export class CatalogService {
   async findAll(): Promise<Catalog[]> {
     return this.catalogRepository.find();
   }
+
+  async findOne(id: number): Promise<Catalog> {
+    return this.catalogRepository.findOne({
+        where: {
+            id: id,
+        }
+    })
+  }
+
+  async create(catalog: Catalog): Promise<Catalog> {
+    return this.catalogRepository.save(catalog)
+  }
+
+  async update(catalog: Catalog): Promise<any> {
+     let result = await this.catalogRepository.createQueryBuilder().update(Catalog).set(catalog).where("id = :id", {id: catalog.id}).execute();
+     if (result.affected != 0) {
+        return await this.catalogRepository.findOne({
+          where: {
+              id: catalog.id,
+          }
+        })
+     }
+     return Promise.reject('Update error!')
+  }
+
+  async delete(id: number): Promise<any> {
+    
+  }
 }
