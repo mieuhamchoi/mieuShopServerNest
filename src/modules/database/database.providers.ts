@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Catalog } from '../catalog/entites/catalog.entity';
 import { Product } from '../product/entites/product.entity';
+import { Receipt } from '../receipt/entites/receipt.entity';
 
 export const databaseProviders = [
   {
@@ -15,7 +16,8 @@ export const databaseProviders = [
         database: 'mieushopdb',
         entities: [
           Catalog,
-          Product
+          Product,
+          Receipt
         ],
         synchronize: true,
       });
