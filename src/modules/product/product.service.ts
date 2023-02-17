@@ -21,6 +21,14 @@ export class ProductService {
         })
     }
 
+    async findByCatalogId(catalogId: number): Promise<Product[]> {
+        return this.productRepository.find({
+            where: {
+                catalogId: catalogId,
+            }
+        })
+    }
+
     async create(product: Product): Promise<Product> {
         return this.productRepository.save(product)
     }
