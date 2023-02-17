@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Product } from 'src/modules/product/entites/product.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, JoinColumn } from 'typeorm';
 
 @Entity()
 export class Catalog {
@@ -10,4 +11,8 @@ export class Catalog {
 
   @Column()
   iconLink: string;
+
+  @OneToMany(() => Product, product => product.catalog)
+  @JoinColumn()
+  public products: Product[];
 }
