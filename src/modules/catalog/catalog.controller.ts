@@ -1,12 +1,12 @@
-import { Body, Controller, Get, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Res } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
 
-@Controller('catalog')
+@Controller('catalogs')
 export class CatalogController {
 
     constructor(private catalogService: CatalogService){}
 
-    @Get('findAll')
+    @Get()
     async findAll(@Res() response ) {
         try {
             const data = await this.catalogService.findAll();
@@ -20,7 +20,7 @@ export class CatalogController {
         }
     }
 
-    @Get('findOne/:id')
+    @Get('/:id')
     async findOne(@Res() response, @Param('id', ParseIntPipe) id: number) {
         try {
             const data = await this.catalogService.findOne(id);
@@ -62,14 +62,13 @@ export class CatalogController {
         }
     }
 
-    @Get('delete/:id')
+    @Delete('delete/:id')
     async delete(@Res() response, @Param('id', ParseIntPipe) id: number) {
         try {
-            const data = await this.catalogService.delete(id);
+            await this.catalogService.delete(id);
             return response.status(200).json({
                 statusCode: 200,
-                message: "Delete success!",
-                data: data
+                message: "Delete success!"
             })
         } catch (err) {
             throw new InternalServerErrorException(err.message);

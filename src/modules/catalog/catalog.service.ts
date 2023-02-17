@@ -26,7 +26,7 @@ export class CatalogService {
     return this.catalogRepository.save(catalog)
   }
 
-  async update(catalog: Catalog): Promise<any> {
+  async update(catalog: Catalog): Promise<Catalog> {
      let result = await this.catalogRepository.createQueryBuilder().update(Catalog).set(catalog).where("id = :id", {id: catalog.id}).execute();
      if (result.affected != 0) {
         return await this.catalogRepository.findOne({
@@ -38,7 +38,15 @@ export class CatalogService {
      return Promise.reject('Update error!')
   }
 
-  async delete(id: number): Promise<any> {
-    
-  }
+  async delete(id: number): Promise<boolean> {
+    let result = await this.catalogRepository.createQueryBuilder()
+                .delete()
+                .from(Catalog)
+                .where("id = :id", { id: id })
+                .execute()
+    if (result.affected != 0) {
+      return true
+    }
+    return Promise.reject('Delete error!')
+  } 
 }
