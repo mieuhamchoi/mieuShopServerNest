@@ -1,14 +1,19 @@
 import { Body, Controller, DefaultValuePipe, Delete, Get, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Query, Res } from '@nestjs/common';
+import { ApiBody, ApiCreatedResponse, ApiForbiddenResponse, ApiOkResponse, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger/dist';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Product } from './entites/product.entity';
+import { createDto } from './product.dto';
 import { ProductService } from './product.service';
-
+@ApiTags('products')
 @Controller('products')
 export class ProductController {
 
     constructor(private productService: ProductService){}
 
     @Get()
+    @ApiCreatedResponse({description: 'Get product list'})
+    @ApiOkResponse({description: "get product success"})
+    @ApiUnauthorizedResponse({description: "Error status"})
     async findAll(@Res() response, @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1
     , @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10): Promise<Pagination<Product>> {
         try {
@@ -58,6 +63,12 @@ export class ProductController {
     }
 
     @Post('create')
+    @ApiBody({ type: [createDto] })
+    @ApiForbiddenResponse({ status: 200, description: 'Forbidden.'})
+    @ApiCreatedResponse({
+        description: 'The record has been successfully created.',
+        type: createDto,
+    })
     async create(@Res() response, @Body() body) {
         try {
             const data = await this.productService.create(body);
