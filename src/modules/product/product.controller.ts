@@ -2,7 +2,7 @@ import { Body, Controller, DefaultValuePipe, Delete, Get, InternalServerErrorExc
 import { ApiBody, ApiCreatedResponse, ApiForbiddenResponse, ApiOkResponse, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger/dist';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Product } from './entites/product.entity';
-import { createDto } from './product.dto';
+import { createDto, findAllDto, findByCatalogId, findOne, update } from './product.dto';
 import { ProductService } from './product.service';
 @ApiTags('products')
 @Controller('products')
@@ -11,9 +11,11 @@ export class ProductController {
     constructor(private productService: ProductService){}
 
     @Get()
-    @ApiCreatedResponse({description: 'Get product list'})
-    @ApiOkResponse({description: "get product success"})
-    @ApiUnauthorizedResponse({description: "Error status"})
+    @ApiForbiddenResponse({ status: 400, description: 'Forbidden get product list'})
+    @ApiCreatedResponse({
+        description: 'get product list successfully.',
+        type: [findAllDto],
+    })
     async findAll(@Res() response, @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1
     , @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10): Promise<Pagination<Product>> {
         try {
@@ -35,6 +37,11 @@ export class ProductController {
     }
 
     @Get('/:id')
+    @ApiForbiddenResponse({ status: 400, description: 'Forbidden get product by id'})
+    @ApiCreatedResponse({
+        description: 'Get product by id successfully.',
+        type: findOne,
+    })
     async findOne(@Res() response, @Param('id', ParseIntPipe) id: number) {
         try {
             const data = await this.productService.findOne(id);
@@ -48,7 +55,12 @@ export class ProductController {
         }
     }
 
-    @Get('by-catalog/:catalogId')
+    @Get('catalog/:catalogId')
+    @ApiForbiddenResponse({ status: 400, description: 'Forbidden get product list by catalog id'})
+    @ApiCreatedResponse({
+        description: 'Get product list by catalog id successfully.',
+        type: [findByCatalogId],
+    })
     async findByCatalogId(@Res() response, @Param('catalogId', ParseIntPipe) catalogId: number) {
         try {
             const data = await this.productService.findByCatalogId(catalogId);
@@ -62,11 +74,11 @@ export class ProductController {
         }
     }
 
-    @Post('create')
+    @Post('')
     @ApiBody({ type: [createDto] })
-    @ApiForbiddenResponse({ status: 200, description: 'Forbidden.'})
+    @ApiForbiddenResponse({ status: 400, description: 'Forbidden Create Product'})
     @ApiCreatedResponse({
-        description: 'The record has been successfully created.',
+        description: 'Create product successfully.',
         type: createDto,
     })
     async create(@Res() response, @Body() body) {
@@ -82,7 +94,13 @@ export class ProductController {
         }
     }
 
-    @Put('update')
+    @Put('')
+    @ApiBody({ type: [update] })
+    @ApiForbiddenResponse({ status: 400, description: 'Forbidden Updated'})
+    @ApiCreatedResponse({
+        description: 'Updated successfully.',
+        type: update,
+    })
     async update(@Res() response, @Body() body) {
         try {
             const data = await this.productService.update(body);
@@ -96,7 +114,9 @@ export class ProductController {
         }
     }
 
-    @Delete('delete/:id')
+    @Delete('/:id')
+    @ApiOkResponse({description: "Delele product successfully"})
+    @ApiForbiddenResponse({ status: 400, description: 'Forbidden Updated'})
     async delete(@Res() response, @Param('id', ParseIntPipe) id: number) {
         try {
             await this.productService.delete(id);
