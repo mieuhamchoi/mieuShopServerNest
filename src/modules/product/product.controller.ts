@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Res } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Query, Res } from '@nestjs/common';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { Product } from './entites/product.entity';
 import { ProductService } from './product.service';
 
 @Controller('products')
@@ -7,9 +9,16 @@ export class ProductController {
     constructor(private productService: ProductService){}
 
     @Get()
-    async findAll(@Res() response ) {
+    async findAll(@Res() response, @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1
+    , @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10): Promise<Pagination<Product>> {
         try {
-            const data = await this.productService.findAll();
+            limit = limit > 100 ? 100 : limit;
+            //const data = await this.productService.findAll();
+            const data = await this.productService.paginate({
+                page,
+                limit,
+                route: 'http://localhost:3000/products',
+              });
             return response.status(200).json({
                 statusCode: 200,
                 message: "Get product list success!",

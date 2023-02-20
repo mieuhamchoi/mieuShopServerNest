@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Product } from './entites/product.entity';
+import {
+    paginate,
+    Pagination,
+    IPaginationOptions,
+  } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class ProductService {
@@ -8,6 +13,14 @@ export class ProductService {
         @Inject('PRODUCT_REPOSITORY')
         private productRepository: Repository<Product>,
     ) {}
+    
+    async paginate(options: IPaginationOptions): Promise<Pagination<Product>> {
+
+        const queryBuilder = this.productRepository.createQueryBuilder();
+        queryBuilder.getMany()
+        
+        return paginate<Product>(queryBuilder, options);
+    }
 
     async findAll(): Promise<Product[]> {
         return this.productRepository.find();
