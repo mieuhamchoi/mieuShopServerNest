@@ -14,16 +14,31 @@ export class ProductService {
         private productRepository: Repository<Product>,
     ) {}
     
-    async paginate(options: IPaginationOptions): Promise<Pagination<Product>> {
+    async findAll(options: IPaginationOptions): Promise<Pagination<Product>> {
 
-        const queryBuilder = this.productRepository.createQueryBuilder();
+        const queryBuilder = this.productRepository.createQueryBuilder("product");
+        queryBuilder.orderBy("product.name", "ASC") // A-Z
         queryBuilder.getMany()
         
         return paginate<Product>(queryBuilder, options);
     }
 
-    async findAll(): Promise<Product[]> {
-        return this.productRepository.find();
+    async search(options: IPaginationOptions, search: string): Promise<Pagination<Product>> {
+        const escapedString = `%${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}%`;
+        const queryBuilder = this.productRepository.createQueryBuilder("product");
+        queryBuilder.where("product.name LIKE :name", { name: escapedString })
+        queryBuilder.orderBy("product.name", "ASC") // A-Z
+        queryBuilder.getMany()
+        return paginate<Product>(queryBuilder, options);
+    }
+
+    async filterByPrice(options: IPaginationOptions, minPrice: number, maxPrice: number): Promise<Pagination<Product>> {
+        const queryBuilder = this.productRepository.createQueryBuilder("product");
+        queryBuilder.where("product.price >= :minPrice", { minPrice })
+        queryBuilder.andWhere("product.price <= :maxPrice", { maxPrice })
+        queryBuilder.orderBy("product.price", "ASC") //DESC giảm dần
+        queryBuilder.getMany();
+        return paginate<Product>(queryBuilder, options);
     }
 
     async findOne(id: number): Promise<Product> {
@@ -34,12 +49,12 @@ export class ProductService {
         })
     }
 
-    async findByCatalogId(catalogId: number): Promise<Product[]> {
-        return this.productRepository.find({
-            where: {
-                catalogId: catalogId,
-            }
-        })
+    async findByCatalogId(options: IPaginationOptions, catalogId: number): Promise<Pagination<Product>> {
+        const queryBuilder = this.productRepository.createQueryBuilder("product");
+        queryBuilder.where("product.catalogId = :catalogId", { catalogId })
+        queryBuilder.orderBy("product.name", "ASC") //DESC giảm dần
+        queryBuilder.getMany();
+        return paginate<Product>(queryBuilder, options);
     }
 
     async create(product: Product): Promise<Product> {

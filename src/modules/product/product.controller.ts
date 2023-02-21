@@ -1,5 +1,5 @@
 import { Body, Controller, DefaultValuePipe, Delete, Get, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Query, Res } from '@nestjs/common';
-import { ApiBody, ApiCreatedResponse, ApiForbiddenResponse, ApiOkResponse, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger/dist';
+import { ApiBody, ApiCreatedResponse, ApiForbiddenResponse, ApiOkResponse, ApiQuery, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger/dist';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Product } from './entites/product.entity';
 import { createDto, findAllDto, findByCatalogId, findOne, update } from './product.dto';
@@ -11,24 +11,78 @@ export class ProductController {
     constructor(private productService: ProductService){}
 
     @Get()
+    @ApiQuery({
+        name: "page",
+        type: String,
+        description: "A parameter. Optional",
+        required: false
+    })
     @ApiForbiddenResponse({ status: 400, description: 'Forbidden get product list'})
     @ApiCreatedResponse({
         description: 'get product list successfully.',
         type: [findAllDto],
     })
-    async findAll(@Res() response, @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1
-    , @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10): Promise<Pagination<Product>> {
+    async findAll(@Res() response,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe ) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query('catalogid', new DefaultValuePipe(-1), ParseIntPipe) catalogid: number = -1,
+    @Query('search', new DefaultValuePipe('')) search: string = '',
+    @Query('isfilter', new DefaultValuePipe(false)) isfilter: string = "false",
+    @Query('minprice', new DefaultValuePipe(0), ParseIntPipe) minprice: number = 0,
+    @Query('maxprice', new DefaultValuePipe(1000000), ParseIntPipe) maxprice: number = 1000000
+    ): Promise<Pagination<Product>> {
         try {
-            limit = limit > 100 ? 100 : limit;
-            //const data = await this.productService.findAll();
-            const data = await this.productService.paginate({
+            // Case get by catalog id
+            if (catalogid != -1) {
+                let data = await this.productService.findByCatalogId({
+                    page,
+                    limit,
+                    route: 'http://localhost:3000/products',
+                }, catalogid);
+                return response.status(200).json({
+                    statusCode: 200,
+                    message: "Result find product by catalog id",
+                    data: data
+                })
+            }
+
+            // Case filter by price
+            if (isfilter == "true") {
+                let data = await this.productService.filterByPrice({
+                    page,
+                    limit,
+                    route: 'http://localhost:3000/products',
+                }, minprice, maxprice);
+                return response.status(200).json({
+                    statusCode: 200,
+                    message: "Filter product by price result!",
+                    data: data
+                })
+            }
+
+            // Case get all
+            if (search === "") {
+                let data = await this.productService.findAll({
+                    page,
+                    limit,
+                    route: 'http://localhost:3000/products',
+                });
+                return response.status(200).json({
+                    statusCode: 200,
+                    message: "Get product list success!",
+                    data: data
+                })
+            }
+    
+            // Case search
+            let data = await this.productService.search({
                 page,
                 limit,
                 route: 'http://localhost:3000/products',
-              });
+            }, search);
             return response.status(200).json({
                 statusCode: 200,
-                message: "Get product list success!",
+                message: "Result search!",
                 data: data
             })
         } catch (err) {
@@ -45,25 +99,6 @@ export class ProductController {
     async findOne(@Res() response, @Param('id', ParseIntPipe) id: number) {
         try {
             const data = await this.productService.findOne(id);
-            return response.status(200).json({
-                statusCode: 200,
-                message: "Get product list success!",
-                data: data
-            })
-        } catch (err) {
-            throw new InternalServerErrorException(err.message);
-        }
-    }
-
-    @Get('catalog/:catalogId')
-    @ApiForbiddenResponse({ status: 400, description: 'Forbidden get product list by catalog id'})
-    @ApiCreatedResponse({
-        description: 'Get product list by catalog id successfully.',
-        type: [findByCatalogId],
-    })
-    async findByCatalogId(@Res() response, @Param('catalogId', ParseIntPipe) catalogId: number) {
-        try {
-            const data = await this.productService.findByCatalogId(catalogId);
             return response.status(200).json({
                 statusCode: 200,
                 message: "Get product list success!",
